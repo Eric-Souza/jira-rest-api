@@ -1,5 +1,5 @@
 import express from 'express';
-import { connectToJiraApi } from './connection/jiraConnection';
+import { connectToJiraApi } from '../connection/jiraConnection';
 
 const routes = express.Router();
 
