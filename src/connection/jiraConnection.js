@@ -16,6 +16,6 @@ export const connectToJiraApi = () => {
     console.log('Connected to Jira API successfully!');
     return jira;
   } catch (error) {
-    return console.log(error);
+    return console.warn(error);
   }
 };
