@@ -1,15 +1,15 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet';
-import credentials from '../../client_secret.json';
+import credentials from '../../../client_secret.json';
 
 // From 'https://www.npmjs.com/package/google-spreadsheet' package
 export const connectToGoogleApi = async () => {
   try {
-    // Instantiate Google spreadsheet class
+    // Instantiate Google spreadsheet class by its id
     const document = new GoogleSpreadsheet(
       '1yNosvUZPv1Zmdb93AV8CGjBM3jb4qeeLoNmjNWaP4ys'
     );
 
-    // Auth to Google
+    // Auth to Google with google developer credentials
     await document.useServiceAccountAuth(credentials);
 
     // Get spreadsheet info
