@@ -13,7 +13,9 @@ export const connectToJiraApi = () => {
       strictSSL: true,
     });
 
-    console.log('Connected to Jira API successfully!');
+    console.log(
+      `Connected to Jira host ${process.env.JIRA_HOST} successfully!`
+    );
     return jira;
   } catch (error) {
     return console.warn(error);

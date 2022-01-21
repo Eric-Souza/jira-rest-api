@@ -1,5 +1,7 @@
 import express from 'express';
 
+import { parseISO, format } from 'date-fns';
+
 import { connectToGoogleApi } from '../connection/google';
 import { connectToJiraApi } from '../connection/jira';
 
@@ -31,9 +33,9 @@ routes.get('/issues', async (req, res) => {
      * @Returns All issues from the specified board
      */
     const allIssues = await jira.getIssuesForBoard(
-      process.env.DOGE_BOARD_ID,
+      process.env.JIRA_BOARD_ID,
       0,
-      500
+      2000
     );
 
     if (!allIssues) {
@@ -47,7 +49,6 @@ routes.get('/issues', async (req, res) => {
     const sheet = await document.addSheet({
       headerValues: [
         'issueKey',
-        'issueId',
         'issueType',
         'issueLabel',
         'issueSummary',
@@ -55,12 +56,13 @@ routes.get('/issues', async (req, res) => {
         'issueStatus',
         'issueCreatedAt',
         'issueUpdatedAt',
-        'issueSprintData',
+        'issueSprints',
         'issueArea',
         'issueCreator',
         'issueAssignee',
         'issueDescription',
         'issuePriority',
+        'issueStoryPoints',
       ],
     });
 
@@ -68,23 +70,30 @@ routes.get('/issues', async (req, res) => {
 
     // Gets each issue and adds a row with its data
     allIssues.issues.map(async (issue) => {
+      const issueSprintNames = issue.fields.customfield_10020?.map(
+        ({ name }) => name
+      );
+
+      const issueSubtasksSummaries = issue.fields.subtasks?.map(
+        ({ fields }) => fields.summary
+      );
+
       const row = {
-        issueKey: JSON.stringify(issue.key),
-        issueId: JSON.stringify(issue.id),
-        issueType: JSON.stringify(issue.fields.issuetype?.name),
+        issueKey: issue.key,
+        issueType: issue.fields.issuetype?.name,
         issueLabel: JSON.stringify(issue.fields.labels),
-        issueSummary: JSON.stringify(issue.fields.summary),
-        issueSubtasks: JSON.stringify(issue.fields.subtasks),
-        issueStatus: JSON.stringify(issue.fields.status?.name),
-        issueCreatedAt: JSON.stringify(issue.fields.created),
-        issueUpdatedAt: JSON.stringify(issue.fields.updated),
-        issueSprintData: JSON.stringify(issue.fields.customfield_10020),
-        issueArea: JSON.stringify(issue.fields.customfield_10039?.value),
-        issueCreator: JSON.stringify(issue.fields.creator?.displayName),
-        issueAssignee: JSON.stringify(issue.fields.assignee?.displayName),
-        issueDescription: JSON.stringify(issue.fields.description),
-        issuePriority: JSON.stringify(issue.fields.priority?.name),
-        // issueFibonacciPoints: ,
+        issueSummary: issue.fields.summary,
+        issueSubtasks: JSON.stringify(issueSubtasksSummaries),
+        issueStatus: issue.fields.status?.name,
+        issueCreatedAt: format(parseISO(issue.fields.created), 'dd-MM-yyyy'),
+        issueUpdatedAt: format(parseISO(issue.fields.updated), 'dd-MM-yyyy'),
+        issueSprints: JSON.stringify(issueSprintNames),
+        issueArea: issue.fields.customfield_10039?.value,
+        issueCreator: issue.fields.creator?.displayName,
+        issueAssignee: issue.fields.assignee?.displayName,
+        issueDescription: issue.fields.description,
+        issuePriority: issue.fields.priority?.name,
+        issueStoryPoints: issue.fields.customfield_10026,
       };
 
       issuesRows.push(row);
@@ -95,7 +104,7 @@ routes.get('/issues', async (req, res) => {
     return res
       .status(200)
       .send(
-        "Sheet with updated Doge Squad issues created at 'https://docs.google.com/spreadsheets/d/1yNosvUZPv1Zmdb93AV8CGjBM3jb4qeeLoNmjNWaP4ys/edit#gid=1972193109'!"
+        `Sheet with updated issues from board with id ${process.env.JIRA_BOARD_ID} created at '${process.env.DASHBOARD_SHEET}'!`
       );
   } catch (error) {
     return res.status(500).send(`An error occured: ${error}`);

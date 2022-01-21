@@ -5,9 +5,7 @@ import credentials from '../../../client_secret.json';
 export const connectToGoogleApi = async () => {
   try {
     // Instantiate Google spreadsheet class by its id
-    const document = new GoogleSpreadsheet(
-      '1yNosvUZPv1Zmdb93AV8CGjBM3jb4qeeLoNmjNWaP4ys'
-    );
+    const document = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_ID);
 
     // Auth to Google with google developer credentials
     await document.useServiceAccountAuth(credentials);
