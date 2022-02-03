@@ -3,8 +3,6 @@ import { parseISO, format } from 'date-fns';
 import { connectToGoogleApi } from '../connection/google';
 import { connectToJiraApi } from '../connection/jira';
 
-import { getCurrentDate } from '../utils/getCurrentDate';
-
 // Google sheet header values
 const headerValues = [
   'issueKey',
@@ -24,32 +22,38 @@ const headerValues = [
   'issueStoryPoints',
 ];
 
-// Connects to Jira API and gets all issues by board id
+// Gets board by id and all issues contained within
 const handleGetIssues = async (jira, res) => {
   try {
-    /**
-     * @Params boardId: string - board to retrieve issues from
-     * @Params startAt: number - Issue number to start from
-     * @Params maxResults: number - Number of issues to be brought
-     * @Returns All issues from the specified board
-     */
+    const board = await jira.getBoard(process.env.JIRA_BOARD_ID);
+
+    if (!board) {
+      return res
+        .status(404)
+        .send('Sorry, no board was found with specified id...');
+    }
+
     const allIssues = await jira.getIssuesForBoard(
       process.env.JIRA_BOARD_ID,
-      0,
-      5000
+      0, // startAt: number - Issue number to start from
+      5000 // maxResults: number - Number of issues to be brought
     );
 
     if (!allIssues) {
-      return res.status(404).send('Sorry, no issues were found...');
+      return res
+        .status(404)
+        .send('Sorry, no issues were found in specified board...');
     }
 
-    return allIssues;
+    return { board, allIssues };
   } catch (error) {
-    return res.status(500).send(`Error while getting all issues: ${error}`);
+    return res
+      .status(500)
+      .send(`Error while getting board and all issues: ${error}`);
   }
 };
 
-// Maps each issue and writes a sheet row with its data
+// Maps each issue and writes a sheet with its data
 const handleWriteSheet = async (sheet, allIssues) => {
   try {
     const issuesRows = [];
@@ -94,15 +98,12 @@ const handleWriteSheet = async (sheet, allIssues) => {
 };
 
 // If no sheet is found, a new one is created
-const handleCreateNewSheet = async (document, allIssues, res) => {
+const handleCreateNewSheet = async (document, board, allIssues, res) => {
   try {
-    // Gets and parses current date
-    const currentDate = getCurrentDate();
-
     // Creates a new sheet
     const newSheet = await document.addSheet({
       headerValues,
-      title: `Issues - Board ${process.env.JIRA_BOARD_ID} - Created at ${currentDate}`,
+      title: board.name,
     });
 
     // Writes issues data into new sheet
@@ -111,7 +112,7 @@ const handleCreateNewSheet = async (document, allIssues, res) => {
     return res
       .status(200)
       .send(
-        `New sheet with all issues from board with id ${process.env.JIRA_BOARD_ID} created at '${process.env.DASHBOARD_SHEET}'!`
+        `New sheet with all issues from board ${board.name} created at '${process.env.DASHBOARD_SHEET}'!`
       );
   } catch (error) {
     return res.status(500).send(`Error while creating new sheet: ${error}`);
@@ -119,18 +120,10 @@ const handleCreateNewSheet = async (document, allIssues, res) => {
 };
 
 // Updates existing sheet (default case)
-const handleUpdateSheet = async (sheet, allIssues, res) => {
+const handleUpdateSheet = async (sheet, board, allIssues, res) => {
   try {
     // Clears all existing sheet data
     await sheet.clear();
-
-    // Gets and parses current date
-    const currentDate = getCurrentDate();
-
-    // Updates title with board id and current day
-    await sheet.updateProperties({
-      title: `Issues - Board ${process.env.JIRA_BOARD_ID} - Updated at ${currentDate}`,
-    });
 
     // Sets sheet's header row
     await sheet.setHeaderRow(headerValues);
@@ -141,7 +134,7 @@ const handleUpdateSheet = async (sheet, allIssues, res) => {
     return res
       .status(200)
       .send(
-        `Sheet with all issues from board with id ${process.env.JIRA_BOARD_ID} updated at '${process.env.DASHBOARD_SHEET}'!`
+        `Sheet with all issues from board ${board.name} updated at '${process.env.DASHBOARD_SHEET}'!`
       );
   } catch (error) {
     return res
@@ -154,19 +147,20 @@ export const IssuesController = async (req, res) => {
   // Connects to Jira API
   const jira = connectToJiraApi();
 
-  // Gets all jira issues by board id
-  const allIssues = await handleGetIssues(jira, res);
+  // Gets board by id and all jira issues contained within
+  const { board, allIssues } = await handleGetIssues(jira, res);
 
   // Connects to Google API and gets spreadsheets
   const document = await connectToGoogleApi();
 
-  // Gets sheet
-  const sheet = await document.sheetsByIndex[0];
+  // Gets sheet by its name
+  const sheet = await document.sheetsByTitle[board.name];
 
-  // Checks if a sheet already exists
+  // Checks if found sheet already exists
   if (!sheet) {
-    return await handleCreateNewSheet(document, allIssues, res);
+    // If specified sheet doesn't exist, creates it
+    return await handleCreateNewSheet(document, board, allIssues, res);
   }
 
-  return await handleUpdateSheet(sheet, allIssues, res);
+  return await handleUpdateSheet(sheet, board, allIssues, res);
 };
