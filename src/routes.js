@@ -5,6 +5,7 @@ import { CreateIssuesController } from './controllers/CreateIssuesController';
 import { UpdateIssuesController } from './controllers/UpdateIssuesController';
 import { DefaultRouteController } from './controllers/DefaultRouteController';
 import { GetIssuesController } from './controllers/GetIssuesController';
+import { CreateCommentsController } from './controllers/CreateCommentsController';
 
 const routes = express.Router();
 
@@ -22,5 +23,8 @@ routes.post('/issues', CreateIssuesController);
 
 // Updates an issue
 routes.put('/issues/:id', UpdateIssuesController);
+
+// Creates a new comment
+routes.post('/issues/:id/comments', CreateCommentsController);
 
 export default routes;

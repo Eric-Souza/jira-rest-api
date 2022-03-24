@@ -4,7 +4,7 @@ export const UpdateIssuesController = async (req, res) => {
   // Connects to Jira API
   const jira = connectToJiraApi();
 
-  const updateIssue = await jira.updateIssue(req.body);
+  await jira.updateIssue(req.params.id, req.body);
 
-  return res.json(updateIssue);
+  return res.send();
 };
