@@ -159,8 +159,8 @@ export const IssuesController = async (req, res) => {
   // Checks if found sheet already exists
   if (!sheet) {
     // If specified sheet doesn't exist, creates it
-    return await handleCreateNewSheet(document, board, allIssues, res);
+    return handleCreateNewSheet(document, board, allIssues, res);
   }
 
-  return await handleUpdateSheet(sheet, board, allIssues, res);
+  return handleUpdateSheet(sheet, board, allIssues, res);
 };
