@@ -6,5 +6,9 @@ export const CreateIssuesController = async (req, res) => {
 
   const newIssue = await jira.addNewIssue(req.body);
 
+  if (newIssue.errors) {
+    return res.status(400).json(newIssue);
+  }
+
   return res.json(newIssue);
 };
