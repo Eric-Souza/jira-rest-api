@@ -3,6 +3,13 @@ import { parseISO, format } from 'date-fns';
 import { connectToGoogleApi } from '../connection/google';
 import { connectToJiraApi } from '../connection/jira';
 
+const IssueStatus = {
+  IN_PROGRESS : 'In Progress',
+  ON_HOLD : 'On Hold',
+  READY_QA : 'Ready for QA',
+  READY_CODE_REVIEW : 'Ready for Code Review',
+}
+
 // Google sheet header values
 const headerValues = [
   'issueKey',
@@ -20,6 +27,13 @@ const headerValues = [
   'issueDescription',
   'issuePriority',
   'issueStoryPoints',
+  'DescricaoTecnica',
+  'DescricaoNegocio',
+  'PrototipoDeTela',  
+  'CritérioDeAceite', 
+  'CenariosDeTeste',
+  'EstimativaMacro',
+  'PorcentagemReady'
 ];
 
 // Gets board by id and all issues contained within
@@ -84,7 +98,19 @@ const handleWriteSheet = async (sheet, allIssues) => {
         issueDescription: issue.fields.description,
         issuePriority: issue.fields.priority?.name,
         issueStoryPoints: issue.fields.customfield_10026,
+        DescricaoTecnica: [IssueStatus.IN_PROGRESS].includes(issue.fields.status?.name) ? 'OK' : 'NOK',
+        DescricaoNegocio: [IssueStatus.IN_PROGRESS].includes(issue.fields.status?.name) ? 'OK' : 'NOK',
+        PrototipoDeTela:  [IssueStatus.IN_PROGRESS].includes(issue.fields.status?.name) ? 'OK' : 'NOK', 
+        CritérioDeAceite: [IssueStatus.READY_CODE_REVIEW].includes(issue.fields.status?.name) ? 'OK' : 'NOK',
+        CenariosDeTeste:  [IssueStatus.READY_QA].includes(issue.fields.status?.name) ? 'OK' : 'NOK',
+        EstimativaMacro:  [IssueStatus.IN_PROGRESS].includes(issue.fields.status?.name) ? 'OK' : 'NOK',      
       };
+
+      const fieldsAnalyse = [row.DescricaoTecnica, row.DescricaoNegocio, row.PrototipoDeTela, row.CritérioDeAceite, row.CenariosDeTeste, row.EstimativaMacro];
+      const filterFieldsOK = fieldsAnalyse.filter((item => item === 'OK'));
+      const perFieldsReady = (100 * filterFieldsOK.length) / fieldsAnalyse.length;
+
+      Object.assign(row, { PorcentagemReady: `${perFieldsReady}%` })
 
       issuesRows.push(row);
     });
