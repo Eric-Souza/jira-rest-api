@@ -102,13 +102,13 @@ const handleWriteSheet = async (sheet, allIssues) => {
         DescricaoNegocio: [IssueStatus.IN_PROGRESS].includes(issue.fields.status?.name) ? 'OK' : 'NOK',
         PrototipoDeTela:  [IssueStatus.IN_PROGRESS].includes(issue.fields.status?.name) ? 'OK' : 'NOK', 
         CritérioDeAceite: [IssueStatus.READY_CODE_REVIEW].includes(issue.fields.status?.name) ? 'OK' : 'NOK',
-        CenariosDeTeste:  [IssueStatus.READY_QA].includes(issue.fields.status?.name) ? 'OK' : 'NOK',
+        CenariosDeTeste:  [IssueStatus.READY_CODE_REVIEW].includes(issue.fields.status?.name) ? 'OK' : 'NOK',
         EstimativaMacro:  [IssueStatus.IN_PROGRESS].includes(issue.fields.status?.name) ? 'OK' : 'NOK',      
       };
 
       const fieldsAnalyse = [row.DescricaoTecnica, row.DescricaoNegocio, row.PrototipoDeTela, row.CritérioDeAceite, row.CenariosDeTeste, row.EstimativaMacro];
       const filterFieldsOK = fieldsAnalyse.filter((item => item === 'OK'));
-      const perFieldsReady = (100 * filterFieldsOK.length) / fieldsAnalyse.length;
+      const perFieldsReady = Math.floor((100 * filterFieldsOK.length) / fieldsAnalyse.length);
 
       Object.assign(row, { PorcentagemReady: `${perFieldsReady}%` })
 
