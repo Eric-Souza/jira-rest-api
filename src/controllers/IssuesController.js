@@ -4,10 +4,12 @@ import { connectToGoogleApi } from '../connection/google';
 import { connectToJiraApi } from '../connection/jira';
 
 const IssueStatus = {
+  TO_DO: 'To Do',
   IN_PROGRESS : 'In Progress',
   ON_HOLD : 'On Hold',
   READY_QA : 'Ready for QA',
   READY_CODE_REVIEW : 'Ready for Code Review',
+  READY_RELEASE : 'Ready for Release',
 }
 
 // Google sheet header values
@@ -27,13 +29,16 @@ const headerValues = [
   'issueDescription',
   'issuePriority',
   'issueStoryPoints',
-  'DescricaoTecnica',
+  'Refinamento',
   'DescricaoNegocio',
+  'DescricaoTecnica',
   'PrototipoDeTela',  
   'CritérioDeAceite', 
   'CenariosDeTeste',
   'EstimativaMacro',
-  'PorcentagemReady'
+  'CheckedByCR',
+  'CheckedByQA',
+  'PorcentagemReady',
 ];
 
 // Gets board by id and all issues contained within
@@ -98,15 +103,18 @@ const handleWriteSheet = async (sheet, allIssues) => {
         issueDescription: issue.fields.description,
         issuePriority: issue.fields.priority?.name,
         issueStoryPoints: issue.fields.customfield_10026,
+        Refinamento:      [IssueStatus.TO_DO].includes(issue.fields.status?.name) ? 'OK' : 'NOK',
         DescricaoTecnica: [IssueStatus.IN_PROGRESS].includes(issue.fields.status?.name) ? 'OK' : 'NOK',
         DescricaoNegocio: [IssueStatus.IN_PROGRESS].includes(issue.fields.status?.name) ? 'OK' : 'NOK',
         PrototipoDeTela:  [IssueStatus.IN_PROGRESS].includes(issue.fields.status?.name) ? 'OK' : 'NOK', 
-        CritérioDeAceite: [IssueStatus.READY_CODE_REVIEW].includes(issue.fields.status?.name) ? 'OK' : 'NOK',
-        CenariosDeTeste:  [IssueStatus.READY_CODE_REVIEW].includes(issue.fields.status?.name) ? 'OK' : 'NOK',
+        CritérioDeAceite: [IssueStatus.IN_PROGRESS].includes(issue.fields.status?.name) ? 'OK' : 'NOK',
+        CenariosDeTeste:  [IssueStatus.IN_PROGRESS].includes(issue.fields.status?.name) ? 'OK' : 'NOK',
         EstimativaMacro:  [IssueStatus.IN_PROGRESS].includes(issue.fields.status?.name) ? 'OK' : 'NOK',      
+        CheckedByCR:      [IssueStatus.READY_QA].includes(issue.fields.status?.name) ? 'OK' : 'NOK',
+        CheckedByQA:      [IssueStatus.READY_RELEASE].includes(issue.fields.status?.name) ? 'OK' : 'NOK', 
       };
 
-      const fieldsAnalyse = [row.DescricaoTecnica, row.DescricaoNegocio, row.PrototipoDeTela, row.CritérioDeAceite, row.CenariosDeTeste, row.EstimativaMacro];
+      const fieldsAnalyse = [row.Refinamento, row.DescricaoNegocio, row.DescricaoTecnica, row.PrototipoDeTela, row.CritérioDeAceite, row.CenariosDeTeste, row.EstimativaMacro, row.CheckedByCR, row.CheckedByQA];
       const filterFieldsOK = fieldsAnalyse.filter((item => item === 'OK'));
       const perFieldsReady = Math.floor((100 * filterFieldsOK.length) / fieldsAnalyse.length);
 
