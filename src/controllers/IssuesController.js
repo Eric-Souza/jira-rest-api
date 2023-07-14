@@ -4,12 +4,18 @@ import { connectToGoogleApi } from '../connection/google';
 import { connectToJiraApi } from '../connection/jira';
 
 const IssueStatus = {
+  BUSINESS_REFINEMENT: 'Business Refinement',
+  TECHNICAL_REFINEMENT: 'Technical Refinement',
+  READY_TO_DEVELOPMENT: 'Ready for Development',
   TO_DO: 'To Do',
   IN_PROGRESS : 'In Progress',
   ON_HOLD : 'On Hold',
-  READY_QA : 'Ready for QA',
   READY_CODE_REVIEW : 'Ready for Code Review',
+  CODE_REVIEW_IN_PROGRESS : 'Code Review in Progress',
+  READY_QA : 'Ready for QA',
+  QA_IN_PROGRESS : 'QA in Progress',
   READY_RELEASE : 'Ready for Release',
+  DONE : 'Done',
 }
 
 // Google sheet header values
@@ -38,6 +44,7 @@ const headerValues = [
   'EstimativaMacro',
   'CheckedByCR',
   'CheckedByQA',
+  'CriterioReady',
   'PorcentagemReady',
 ];
 
@@ -97,28 +104,29 @@ const handleWriteSheet = async (sheet, allIssues) => {
         issueCreatedAt: format(parseISO(issue.fields.created), 'dd-MM-yyyy'),
         issueUpdatedAt: format(parseISO(issue.fields.updated), 'dd-MM-yyyy'),
         issueSprints: JSON.stringify(issueSprintNames),
-        issueArea: issue.fields.customfield_10039?.value,
+        issueArea: issue.fields.customfield_100310?.value,
         issueCreator: issue.fields.creator?.displayName,
         issueAssignee: issue.fields.assignee?.displayName,
         issueDescription: issue.fields.description,
         issuePriority: issue.fields.priority?.name,
         issueStoryPoints: issue.fields.customfield_10026,
-        Refinamento:      [IssueStatus.TO_DO].includes(issue.fields.status?.name) ? 'OK' : 'NOK',
-        DescricaoTecnica: [IssueStatus.IN_PROGRESS].includes(issue.fields.status?.name) ? 'OK' : 'NOK',
-        DescricaoNegocio: [IssueStatus.IN_PROGRESS].includes(issue.fields.status?.name) ? 'OK' : 'NOK',
-        PrototipoDeTela:  [IssueStatus.IN_PROGRESS].includes(issue.fields.status?.name) ? 'OK' : 'NOK', 
-        CritérioDeAceite: [IssueStatus.IN_PROGRESS].includes(issue.fields.status?.name) ? 'OK' : 'NOK',
-        CenariosDeTeste:  [IssueStatus.IN_PROGRESS].includes(issue.fields.status?.name) ? 'OK' : 'NOK',
-        EstimativaMacro:  [IssueStatus.IN_PROGRESS].includes(issue.fields.status?.name) ? 'OK' : 'NOK',      
-        CheckedByCR:      [IssueStatus.READY_QA].includes(issue.fields.status?.name) ? 'OK' : 'NOK',
-        CheckedByQA:      [IssueStatus.READY_RELEASE].includes(issue.fields.status?.name) ? 'OK' : 'NOK', 
+        Refinamento:      Object.values(IssueStatus).slice(0,12).includes(issue.fields.status?.name) ? 'OK' : 'NOK',
+        DescricaoNegocio: Object.values(IssueStatus).slice(1,12).includes(issue.fields.status?.name) ? 'OK' : 'NOK',
+        DescricaoTecnica: Object.values(IssueStatus).slice(2,12).includes(issue.fields.status?.name) ? 'OK' : 'NOK',
+        PrototipoDeTela:  Object.values(IssueStatus).slice(2,12).includes(issue.fields.status?.name) ? 'OK' : 'NOK', 
+        CritérioDeAceite: Object.values(IssueStatus).slice(2,12).includes(issue.fields.status?.name) ? 'OK' : 'NOK',
+        CenariosDeTeste:  Object.values(IssueStatus).slice(2,12).includes(issue.fields.status?.name) ? 'OK' : 'NOK',
+        EstimativaMacro:  Object.values(IssueStatus).slice(3,12).includes(issue.fields.status?.name) ? 'OK' : 'NOK',      
+        CheckedByCR:      Object.values(IssueStatus).slice(8,12).includes(issue.fields.status?.name) ? 'OK' : 'NOK',
+        CheckedByQA:      Object.values(IssueStatus).slice(10,12).includes(issue.fields.status?.name) ? 'OK' : 'NOK', 
+      
       };
 
       const fieldsAnalyse = [row.Refinamento, row.DescricaoNegocio, row.DescricaoTecnica, row.PrototipoDeTela, row.CritérioDeAceite, row.CenariosDeTeste, row.EstimativaMacro, row.CheckedByCR, row.CheckedByQA];
       const filterFieldsOK = fieldsAnalyse.filter((item => item === 'OK'));
       const perFieldsReady = Math.floor((100 * filterFieldsOK.length) / fieldsAnalyse.length);
 
-      Object.assign(row, { PorcentagemReady: `${perFieldsReady}%` })
+      Object.assign(row, { PorcentagemReady: `${perFieldsReady}%`, CriterioReady: `${fieldsAnalyse.length}` })
 
       issuesRows.push(row);
     });
