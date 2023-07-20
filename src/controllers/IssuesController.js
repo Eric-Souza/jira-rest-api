@@ -126,7 +126,7 @@ const handleWriteSheet = async (sheet, allIssues) => {
       const filterFieldsOK = fieldsAnalyse.filter((item => item === 'OK'));
       const perFieldsReady = Math.floor((100 * filterFieldsOK.length) / fieldsAnalyse.length);
 
-      Object.assign(row, { PorcentagemReady: `${perFieldsReady}%`, CriterioReady: `${fieldsAnalyse.length}` })
+      Object.assign(row, { PorcentagemReady: `${perFieldsReady}%`, CriterioReady: `${fieldsAnalyse.length}%` })
 
       issuesRows.push(row);
     });
