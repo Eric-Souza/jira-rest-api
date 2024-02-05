@@ -18,6 +18,7 @@ const IssueStatus = {
   DONE : 'Done',
 }
 
+
 // Google sheet header values
 const headerValues = [
   'issueKey',
@@ -28,10 +29,13 @@ const headerValues = [
   'issueStatus',
   'issueCreatedAt',
   'issueUpdatedAt',
+  'issueStartDate',
+  'issueChangeCompletionDate',
   'issueSprints',
   'issueArea',
   'issueCreator',
   'issueAssignee',
+  'issueAssigneeQA',
   'issueDescription',
   'issuePriority',
   'issueStoryPoints',
@@ -103,10 +107,13 @@ const handleWriteSheet = async (sheet, allIssues) => {
         issueStatus: issue.fields.status?.name,
         issueCreatedAt: format(parseISO(issue.fields.created), 'dd-MM-yyyy'),
         issueUpdatedAt: format(parseISO(issue.fields.updated), 'dd-MM-yyyy'),
+        issueStartDate: issue.fields.start && format(parseISO(issue.fields.start), 'dd-MM-yyyy'),
+        issueChangeCompletionDate: issue.fields.change && format(parseISO(issue.fields.change), 'dd-MM-yyyy'),
         issueSprints: JSON.stringify(issueSprintNames),
         issueArea: issue.fields.customfield_100310?.value,
         issueCreator: issue.fields.creator?.displayName,
         issueAssignee: issue.fields.assignee?.displayName,
+        issueAssigneeQA: issue.fields.customfield_10170?.displayName,
         issueDescription: issue.fields.description,
         issuePriority: issue.fields.priority?.name,
         issueStoryPoints: issue.fields.customfield_10026,
